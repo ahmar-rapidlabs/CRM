@@ -1,5 +1,3 @@
-import logging
-
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.middleware import csrf
@@ -7,7 +5,6 @@ from rest_framework import exceptions as rest_exceptions, response, decorators a
 from rest_framework_simplejwt import tokens, views as jwt_views, serializers as jwt_serializers, exceptions as jwt_exceptions
 from user import serializers, models
 
-logger = logging.getLogger(__name__)
 
 def get_user_tokens(user):
     refresh = tokens.RefreshToken.for_user(user)
@@ -52,8 +49,8 @@ def loginView(request):
         res.data = tokens
         res["X-CSRFToken"] = csrf.get_token(request)
         return res
-    logger.warn("Login failed for email: %s", email)
-    raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
+    raise rest_exceptions.AuthenticationFailed(
+        "Email or Password is incorrect!")
 
 
 @rest_decorators.api_view(["POST"])
@@ -66,7 +63,6 @@ def registerView(request):
 
     if user is not None:
         return response.Response("Registered!")
-    logger.warn("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 
 
@@ -84,11 +80,10 @@ def logoutView(request):
         res.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
         res.delete_cookie("X-CSRFToken")
         res.delete_cookie("csrftoken")
-        res["X-CSRFToken"] = None
-
+        res["X-CSRFToken"]=None
+        
         return res
     except:
-        logger.warn("Invalid token")
         raise rest_exceptions.ParseError("Invalid token")
 
 
