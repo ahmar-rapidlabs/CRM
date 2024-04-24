@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosInstance } from '../../api/apiConfig'
-
 export default function Register() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
@@ -9,9 +8,8 @@ export default function Register() {
     const last_name = useRef()
     const email = useRef()
     const password = useRef()
-    const password2 = useRef(undefined)
-
-
+    const password2 = useRef()
+    const role = useRef()
     async function onSubmitForm(event) {
         event.preventDefault()
         const data = {
@@ -19,23 +17,19 @@ export default function Register() {
             last_name: last_name.current.value,
             email: email.current.value,
             password: password.current.value,
-            password2: password2.current.value
-          };
-
+            password2: password2.current.value,
+            role: role.current.value
+        };
         setLoading(true)
-
         try {
             const response = await axiosInstance.post('auth/register', JSON.stringify(data))
-
             setLoading(false)
-
             navigate('/auth/login')
         } catch (error) {
             setLoading(false)
             // TODO: handle errors
         }
     }
-
     return (
         <div className='container'>
             <h2>Register</h2>
@@ -54,6 +48,9 @@ export default function Register() {
                 </div>
                 <div className="mb-3">
                     <input type="password" placeholder='Confirm Password' autoComplete='off' className='form-control' id="passwordConfirmation" ref={password2} />
+                </div>
+                <div className="mb-3">
+                    <input type="text" placeholder='Role' autoComplete='off' className='form-control' id="role" ref={role} />
                 </div>
                 <div className="mb-3">
                     <button disabled={loading} className='btn btn-success' type="submit">Login</button>
