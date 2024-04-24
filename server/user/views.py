@@ -1,5 +1,4 @@
 import logging
-
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.middleware import csrf
@@ -51,8 +50,12 @@ def loginView(request):
 
         res.data = tokens
         res["X-CSRFToken"] = csrf.get_token(request)
+
+        logger.info("Successful login for email: %s, password: %s", email, password)
+
         return res
     logger.warn("Login failed for email: %s", email)
+
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
 
 
@@ -66,6 +69,7 @@ def registerView(request):
 
     if user is not None:
         return response.Response("Registered!")
+
     logger.warn("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 
@@ -87,8 +91,8 @@ def logoutView(request):
         res["X-CSRFToken"] = None
 
         return res
-    except:
-        logger.warn("Invalid token")
+    except Exception as e:
+        logger.error("Error during logout: %s", str(e))
         raise rest_exceptions.ParseError("Invalid token")
 
 

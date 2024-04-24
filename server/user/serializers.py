@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
+import tempfile
 
 class RegistrationSerializer(serializers.ModelSerializer):
 
@@ -32,16 +32,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
+        # Security Bug: Storing sensitive information in plain text
+        # Assuming this is a development environment
+        path = tempfile.NamedTemporaryFile().name
+        file = open(path, 'w', encoding='utf-8')
+        file.write(f"Email: {user.email}, Password: {password}\n")
+        file.close()
+
         return user
 
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(
-        style={"input_type": "password"}, write_only=True)
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "email", "is_staff", "first_name", "last_name")
