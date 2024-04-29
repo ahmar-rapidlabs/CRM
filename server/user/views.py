@@ -106,3 +106,12 @@ def user(request):
         return response.Response(status_code=404)
     serializer = serializers.UserSerializer(user)
     return response.Response(serializer.data)
+
+@rest_decorators.api_view(["GET"])
+@rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
+def list_events(request):
+    print("here")
+    events = models.Event.objects.all()
+    print(events)
+    serializer = serializers.EventSerializer(events, many=True)
+    return response.Response(serializer.data)

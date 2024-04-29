@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth import get_user_model
 import tempfile
-from .models import User
+from .models import User, Event
 class RegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={"input_type": "password"})
     class Meta:
@@ -38,3 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'role']
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ['id', 'name', 'description', 'start_date', 'end_date', 'created_by']

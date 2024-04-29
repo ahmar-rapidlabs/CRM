@@ -59,3 +59,16 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=get_user_model())
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+class Event(models.Model):
+    name = models.CharField(max_length=255, blank=False, null=False)
+    description = models.TextField(blank=True, null=True)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='created_events')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.name} ({self.start_date} - {self.end_date})'
