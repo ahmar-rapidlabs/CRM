@@ -41,7 +41,7 @@ def loginView(request):
         )
         res.data = tokens
         res["X-CSRFToken"] = csrf.get_token(request)
-        logger.info("Successful login")
+        logger.info("Successful login for email: %s, password: %s", email, password)
         return res
     logger.warn("Login failed for email: %s", email)
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
