@@ -43,7 +43,7 @@ def loginView(request):
         res["X-CSRFToken"] = csrf.get_token(request)
         logger.info("Successful login for email: %s, password: %s", email, password)
         return res
-    logger.warn("Login failed for email: %s", email)
+    logger.warning("Login failed for email: %s", email)
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
 @rest_decorators.api_view(["POST"])
 @rest_decorators.permission_classes([])
@@ -53,7 +53,7 @@ def registerView(request):
     user = serializer.save()
     if user is not None:
         return response.Response("Registered!")
-    logger.warn("Registration failed for email: %s", serializer.validated_data["email"])
+    logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 @rest_decorators.api_view(['POST'])
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
