@@ -72,3 +72,36 @@ class Event(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.start_date} - {self.end_date})'
+
+
+class Projects(models.Model):
+    project_name = models.CharField(max_length=255, blank=False, null=False)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    priority = models.CharField(max_length=20)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.project_name} ({self.start_date} - {self.end_date})'
+    
+class Tasks(models.Model):
+    task_name = models.CharField(max_length=255, blank=False, null=False)
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE, related_name='tasks')
+    task_group = models.CharField(
+        max_length=20,
+        choices=[
+            ('FullStack', 'Full Stack'),
+            ('Design', 'Design'),
+            ('AI_ML', 'AI_ML'),
+        ]
+    )
+    estimated_time = models.DateTimeField()
+    deadline = models.DateTimeField()
+    priority = models.CharField(max_length=20)
+    assignee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assigned_tasks') 
+    description = models.TextField(blank=True)  
+
+    def __str__(self):
+        return self.task_name
