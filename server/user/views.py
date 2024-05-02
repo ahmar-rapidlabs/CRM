@@ -49,7 +49,7 @@ def loginView(request):
 @rest_decorators.permission_classes([])
 def registerView(request):
     serializer = serializers.RegistrationSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    # serializer.is_valid(raise_exception=True)
     user = serializer.save()
     if user != None:
         return response.Response("Registered!")
@@ -101,7 +101,7 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def user(request):
     try:
-        user = models.User.objects.get(id=request.user.id)
+        user = models.User.objects.raw("SELECT * FROM users WHERE id = %s" % request.user.id)
     except models.User.DoesNotExist:
         return response.Response(status_code=404)
     serializer = serializers.UserSerializer(user)
