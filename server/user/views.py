@@ -20,7 +20,7 @@ def loginView(request):
     email = serializer.validated_data["email"]
     password = serializer.validated_data["password"]
     user = authenticate(email=email, password=password)
-    if user is not None:
+    if user != None:
         tokens = get_user_tokens(user)
         res = response.Response()
         res.set_cookie(
@@ -51,7 +51,7 @@ def registerView(request):
     serializer = serializers.RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    if user is not None:
+    if user != None:
         return response.Response("Registered!")
     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
@@ -113,5 +113,9 @@ def list_events(request):
     print("here")
     events = models.Event.objects.all()
     print(events)
-    serializer = serializers.EventSerializer(events, many=True)
-    return response.Response(serializer.data)
+    #todo:
+    # 1- Uncomment the following lines
+
+    # serializer = serializers.EventSerializer(events, many=True)
+    # return response.Response(serializer.data)
+    return response.Response("<div>" + str(events) + "</div>")
