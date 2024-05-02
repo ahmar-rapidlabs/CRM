@@ -113,5 +113,9 @@ def list_events(request):
     print("here")
     events = models.Event.objects.all()
     print(events)
-    serializer = serializers.EventSerializer(events, many=True)
-    return response.Response(serializer.data)
+    #todo:
+    # 1- Uncomment the following lines
+
+    # serializer = serializers.EventSerializer(events, many=True)
+    # return response.Response(serializer.data)
+    return response.Response("<div>" + str(events) + "</div>")
