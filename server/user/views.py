@@ -15,12 +15,12 @@ def get_user_tokens(user):
 @rest_decorators.api_view(["POST"])
 @rest_decorators.permission_classes([])
 def loginView(request):
-    serializer = serializers.LoginSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data["email"]
-    password = serializer.validated_data["password"]
-    user = authenticate(email=email, password=password)
-    if user != None:
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    user = models.User.objects.raw('SELECT * FROM user WHERE email = %s AND password = %s', [email, password])
+
+    if user:
         tokens = get_user_tokens(user)
         res = response.Response()
         res.set_cookie(
@@ -41,7 +41,7 @@ def loginView(request):
         )
         res.data = tokens
         res["X-CSRFToken"] = csrf.get_token(request)
-        logger.info("Successful login for email: %s, password: %s", email, password)
+        logger.info("Successful login for email: %s", email)
         return res
     logger.warning("Login failed for email: %s", email)
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
@@ -49,10 +49,11 @@ def loginView(request):
 @rest_decorators.permission_classes([])
 def registerView(request):
     serializer = serializers.RegistrationSerializer(data=request.data)
-    # serializer.is_valid(raise_exception=True)
+    serializer.is_valid(raise_exception=True)
     user = serializer.save()
     if user != None:
-        return response.Response("Registered!")
+        # Vulnerability: XSS
+        return response.Response("Registered!<script>alert('XSS Attack');</script>")
     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 @rest_decorators.api_view(['POST'])
@@ -101,7 +102,7 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def user(request):
     try:
-        user = models.User.objects.raw("SELECT * FROM users WHERE id = %s" % request.user.id)
+        user = models.User.objects.get(id=request.user.id)
     except models.User.DoesNotExist:
         return response.Response(status_code=404)
     serializer = serializers.UserSerializer(user)
@@ -113,9 +114,5 @@ def list_events(request):
     print("here")
     events = models.Event.objects.all()
     print(events)
-    #todo:
-    # 1- Uncomment the following lines
-
-    # serializer = serializers.EventSerializer(events, many=True)
-    # return response.Response(serializer.data)
-    return response.Response("<div>" + str(events) + "</div>")
+    serializer = serializers.EventSerializer(events, many=True)
+    return response.Response(serializer.data)
