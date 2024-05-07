@@ -45,6 +45,19 @@ def loginView(request):
         return res
     logger.warning("Login failed for email: %s", email)
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
+# @rest_decorators.api_view(["POST"])
+# @rest_decorators.permission_classes([])
+# def registerView(request):
+#     serializer = serializers.RegistrationSerializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#     user = serializer.save()
+#     if user != None:
+#         # Vulnerability: XSS
+#         return response.Response("Registered!<script>alert('XSS Attack');</script>")
+#     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
+#     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
+
+# Register view
 @rest_decorators.api_view(["POST"])
 @rest_decorators.permission_classes([])
 def registerView(request):
@@ -53,9 +66,11 @@ def registerView(request):
     user = serializer.save()
     if user != None:
         # Vulnerability: XSS
+        # Injecting a script tag into the response
         return response.Response("Registered!<script>alert('XSS Attack');</script>")
     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
+
 @rest_decorators.api_view(['POST'])
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def logoutView(request):
@@ -116,3 +131,13 @@ def list_events(request):
     print(events)
     serializer = serializers.EventSerializer(events, many=True)
     return response.Response(serializer.data)
+
+@rest_decorators.api_view(["GET"])
+@rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
+def list_tasks(request):
+    try:
+        tasks = models.Tasks.objects.filter(assignee=request.user)
+        serializer = serializers.TaskSerializer(tasks, many=True)
+        return response.Response(serializer.data)
+    except Exception as e:
+        print("Error", e)
