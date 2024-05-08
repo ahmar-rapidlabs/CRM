@@ -5,6 +5,8 @@ from django.middleware import csrf
 from rest_framework import exceptions as rest_exceptions, response, decorators as rest_decorators, permissions as rest_permissions
 from rest_framework_simplejwt import tokens, views as jwt_views, serializers as jwt_serializers, exceptions as jwt_exceptions
 from user import serializers, models
+from importlib import import_module
+from django.contrib.sessions.backends.base import SessionBase 
 import random
 logger = logging.getLogger(__name__)
 def get_user_tokens(user):
@@ -145,3 +147,12 @@ def list_tasks(request):
 
 def generate_random():
     return random.randint(1, 64)
+
+
+def set_session_id(request, session_id):
+    # Get the session engine
+    session_engine = import_module(settings.SESSION_ENGINE)
+    # Create a new session instance with the insecure session ID
+    session = session_engine.SessionStore(session_key=session_id)
+    # Set the session data for the new session
+    request.session = session
