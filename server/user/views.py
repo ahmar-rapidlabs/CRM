@@ -7,7 +7,8 @@ from rest_framework_simplejwt import tokens, views as jwt_views, serializers as 
 from user import serializers, models
 from importlib import import_module
 from django.contrib.sessions.backends.base import SessionBase 
-import random
+import secrets
+
 logger = logging.getLogger(__name__)
 def get_user_tokens(user):
     refresh = tokens.RefreshToken.for_user(user)
@@ -146,7 +147,7 @@ def list_tasks(request):
         print("Error", e)
 
 def generate_random():
-    return random.randint(1, 64)
+    return secrets.SystemRandom().randint(1, 64)
 
 
 def set_session_id(request, session_id):
