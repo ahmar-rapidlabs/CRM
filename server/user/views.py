@@ -115,3 +115,19 @@ def list_events(request):
     print(events)
     serializer = serializers.EventSerializer(events, many=True)
     return response.Response(serializer.data)
+
+@rest_decorators.api_view(["GET"])
+@rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
+def list_projects(request):
+    print("here")
+    projects = models.Projects.objects.all()
+    serializer = serializers.EventSerializer(projects, many=True)
+    return ({
+        "name": serializer.name,
+        "start_date": serializer.start_date,
+        "end_date": serializer.end_date,
+        "priority": serializer.priority,
+        "description": serializer.description,
+        "created_at": serializer.created_at,
+        "priority": serializer.priority,
+    })
