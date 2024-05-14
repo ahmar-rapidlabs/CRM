@@ -26,7 +26,7 @@ def loginView(request):
     email = serializer.validated_data["email"]
     password = serializer.validated_data["password"]
     user = authenticate(email=email, password=password)
-    if user is not None:
+    if user != None:
         tokens = get_user_tokens(user)
         res = response.Response()
         res.set_cookie(
@@ -57,7 +57,7 @@ def registerView(request):
     serializer = serializers.RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    if user is not None:
+    if user != None:
         return response.Response("Registered!")
     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
