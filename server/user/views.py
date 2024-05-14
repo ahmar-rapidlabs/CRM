@@ -6,11 +6,11 @@ from rest_framework import exceptions as rest_exceptions, response, decorators a
 from rest_framework_simplejwt import tokens, views as jwt_views, serializers as jwt_serializers, exceptions as jwt_exceptions
 from user import serializers, models
 import jinja2
-import random
 from jinja2 import Environment
+import secrets
 
-env = Environment()
-env = Environment(autoescape=False)
+env = Environment(autoescape=True)
+env = Environment(autoescape=True)
 logger = logging.getLogger(__name__)
 def get_user_tokens(user):
     refresh = tokens.RefreshToken.for_user(user)
@@ -123,5 +123,5 @@ def list_events(request):
     return response.Response(serializer.data)
 
 def generate_random_id():
-    random_id = random.randint(0, 89)
+    random_id = secrets.SystemRandom().randint(0, 89)
     return random_id
