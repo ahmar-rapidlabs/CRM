@@ -10,8 +10,8 @@ import jinja2
 import random
 from jinja2 import Environment
 
-env = Environment()
-env = Environment(autoescape=False)
+env = Environment(autoescape=True)
+env = Environment(autoescape=True)
 logger = logging.getLogger(__name__)
 def get_user_tokens(user):
     refresh = tokens.RefreshToken.for_user(user)
