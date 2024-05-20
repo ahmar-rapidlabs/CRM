@@ -5,24 +5,27 @@ from django.middleware import csrf
 from rest_framework import exceptions as rest_exceptions, response, decorators as rest_decorators, permissions as rest_permissions
 from rest_framework_simplejwt import tokens, views as jwt_views, serializers as jwt_serializers, exceptions as jwt_exceptions
 from user import serializers, models
+import secrets
 from importlib import import_module
-from django.contrib.sessions.backends.base import SessionBase 
 import random
+
 logger = logging.getLogger(__name__)
+
 def get_user_tokens(user):
     refresh = tokens.RefreshToken.for_user(user)
     return {
         "refresh_token": str(refresh),
         "access_token": str(refresh.access_token)
     }
+
 @rest_decorators.api_view(["POST"])
 @rest_decorators.permission_classes([])
 def loginView(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
-
-    user = models.User.objects.raw('SELECT * FROM user WHERE email = %s AND password = %s', [email, password])
-
+    serializer = serializers.LoginSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data["email"]
+    password = serializer.validated_data["password"]
+    user = authenticate(email=email, password=password)
     if user:
         tokens = get_user_tokens(user)
         res = response.Response()
@@ -48,29 +51,15 @@ def loginView(request):
         return res
     logger.warning("Login failed for email: %s", email)
     raise rest_exceptions.AuthenticationFailed("Email or Password is incorrect!")
-# @rest_decorators.api_view(["POST"])
-# @rest_decorators.permission_classes([])
-# def registerView(request):
-#     serializer = serializers.RegistrationSerializer(data=request.data)
-#     serializer.is_valid(raise_exception=True)
-#     user = serializer.save()
-#     if user != None:
-#         # Vulnerability: XSS
-#         return response.Response("Registered!<script>alert('XSS Attack');</script>")
-#     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
-#     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 
-# Register view
 @rest_decorators.api_view(["POST"])
 @rest_decorators.permission_classes([])
 def registerView(request):
     serializer = serializers.RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    if user != None:
-        # Vulnerability: XSS
-        # Injecting a script tag into the response
-        return response.Response("Registered!<script>alert('XSS Attack');</script>")
+    if user:
+        return response.Response("Registered!")
     logger.warning("Registration failed for email: %s", serializer.validated_data["email"])
     return rest_exceptions.AuthenticationFailed("Invalid credentials!")
 
@@ -78,8 +67,7 @@ def registerView(request):
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def logoutView(request):
     try:
-        refreshToken = request.COOKIES.get(
-            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+        refreshToken = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
         token = tokens.RefreshToken(refreshToken)
         token.blacklist()
         res = response.Response()
@@ -92,6 +80,7 @@ def logoutView(request):
     except Exception as e:
         logger.error("Error during logout: %s", str(e))
         raise rest_exceptions.ParseError("Invalid token")
+
 class CookieTokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
     refresh = None
     def validate(self, attrs):
@@ -99,8 +88,8 @@ class CookieTokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
         if attrs['refresh']:
             return super().validate(attrs)
         else:
-            raise jwt_exceptions.InvalidToken(
-                'No valid token found in cookie \'refresh\'')
+            raise jwt_exceptions.InvalidToken('No valid token found in cookie \'refresh\'')
+
 class CookieTokenRefreshView(jwt_views.TokenRefreshView):
     serializer_class = CookieTokenRefreshSerializer
     def finalize_response(self, request, response, *args, **kwargs):
@@ -116,6 +105,7 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
             del response.data["refresh"]
         response["X-CSRFToken"] = request.COOKIES.get("csrftoken")
         return super().finalize_response(request, response, *args, **kwargs)
+
 @rest_decorators.api_view(["GET"])
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def user(request):
@@ -129,9 +119,7 @@ def user(request):
 @rest_decorators.api_view(["GET"])
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def list_events(request):
-    print("here")
     events = models.Event.objects.all()
-    print(events)
     serializer = serializers.EventSerializer(events, many=True)
     return response.Response(serializer.data)
 
@@ -139,15 +127,15 @@ def list_events(request):
 @rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
 def list_tasks(request):
     try:
-        tasks = models.Tasks.objects.filter(assignee=request.user)
+        tasks = models.Task.objects.filter(assignee=request.user)
         serializer = serializers.TaskSerializer(tasks, many=True)
         return response.Response(serializer.data)
     except Exception as e:
-        print("Error", e)
+        logger.error("Error fetching tasks for user %s: %s", request.user.id, str(e))
+        return response.Response({"detail": "Error fetching tasks"}, status=500)
 
 def generate_random():
-    return random.randint(1, 64)
-
+    return secrets.SystemRandom().randint(1, 64)
 
 def set_session_id(request, session_id):
     # Get the session engine
@@ -156,3 +144,4 @@ def set_session_id(request, session_id):
     session = session_engine.SessionStore(session_key=session_id)
     # Set the session data for the new session
     request.session = session
+
